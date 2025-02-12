@@ -72,7 +72,6 @@ class Dino(pygame.sprite.Sprite):
         self.y_inicial = y_inicial
         self.velocidade_y = 0
         self.index_sprite = 0
-        self.sheet = None
         self.sprite_list = []
         self.set_cor(cor_dino)
 
@@ -83,12 +82,12 @@ class Dino(pygame.sprite.Sprite):
     def set_cor(self, cor:tuple):
         """Define uma cor aleatória para o Dino e adiciona as sprites a lista de sprites com base na
         imagem de fundo (sheet_dino), aplicando a cor escolhida."""
-        self.sheet = sheet_dino.copy()
-        self.sheet.fill(cor, special_flags=pygame.BLEND_RGB_MULT)
+        sheet = sheet_dino.copy()
+        sheet.fill(cor, special_flags=pygame.BLEND_RGB_MULT)
 
         self.sprite_list = []
         for i in range(6):
-            img = self.sheet.subsurface((i * 64,0), (64,64))
+            img = sheet.subsurface((i * 64,0), (64,64))
             self.sprite_list.append(img)
 
     def run(self):
@@ -368,17 +367,17 @@ if __name__ == "__main__":
     CINZA = (200,200,200)
     AZUL = (0,0,255)
 
+    tela = pygame.display.set_mode((LARGURA_TELA, ALTURA_TELA))
+    pygame.display.set_caption("Dino I.A.")
+    pygame.display.set_icon(pygame.image.load(resource_path("icon.png")))
+
+    relogio = pygame.time.Clock()
     cenario_velocidade = 5
     renicia = False
     start = False
     pontos = 0
 
-    tela = pygame.display.set_mode((LARGURA_TELA, ALTURA_TELA))
-    pygame.display.set_caption("Dino I.A.")
-
-    relogio = pygame.time.Clock()
-
-    """Carrega as imagens, sons e a fonte do jogo"""
+    """Carrega a fonte as imagens e os sons do jogo"""
     diretorio_fonte = resource_path("fonts", "Minecraft.ttf")
 
     sheet_dino = pygame.image.load(resource_path("images", "dino.png")).convert_alpha()
