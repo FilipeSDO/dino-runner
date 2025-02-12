@@ -142,7 +142,17 @@ class RedeNeural:
         pygame.draw.line(surface, AZUL, posicao_antiga, posicao_atual)
 
         posicao_x = origem_x + 700
-        origem_y = 40
+
+        indice_dino = lista_dinos.index(lista_dinos_vivos[-1])
+        texto_descricao = exibe_mensagem(f'individuo: {indice_dino + 1}', 20, VERMELHO)
+        surface.blit(texto_descricao, (ponto_x + 50, origem_y))
+
+        texto_descricao = exibe_mensagem('cor:', 20, PRETO)
+        surface.blit(texto_descricao, (ponto_x + 300, origem_y))
+
+        pygame.draw.rect(surface, lista_dinos[indice_dino].cor_dino, (ponto_x + 350, origem_y, 17, 17))
+
+        origem_y = 60
         posicoes_xy = []
         for indice_camada, camada in enumerate(self.lista_neuronios):
             if indice_camada == 0:
@@ -197,6 +207,7 @@ class Dino(pygame.sprite.Sprite):
         self.velocidade_y = 0
         self.index_sprite = 0
         self.sprite_list = []
+        self.cor_dino = None
 
         self.set_cor()
 
@@ -207,9 +218,9 @@ class Dino(pygame.sprite.Sprite):
     def set_cor(self):
         """Define uma cor aleatória para o Dino e adiciona as sprites a lista de sprites com base na
         imagem de fundo (sheet_dino), aplicando a cor escolhida."""
-        cor_aleatoria = (randint(0,200), randint(0,200), randint(0,200))
+        self.cor_dino = (randint(0,200), randint(0,200), randint(0,200))
         sheet = sheet_dino.copy()
-        sheet.fill(cor_aleatoria, special_flags=pygame.BLEND_RGB_MULT)
+        sheet.fill(self.cor_dino, special_flags=pygame.BLEND_RGB_MULT)
 
         self.sprite_list = []
         for i in range(6):
@@ -540,7 +551,7 @@ if __name__ == "__main__":
 
     for _ in range(499):
         dino = Dino(ALTURA_TELA-15)
-        dino.individuo = rede_neural.mutacao(melhor_dino.individuo, 0.5)
+        dino.individuo = rede_neural.individuo_random()
         lista_dinos.append(dino)
         group_sprites.add(dino)
 
