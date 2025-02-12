@@ -1,4 +1,4 @@
-import pygame, sys, os, copy, json, numpy as np
+import pygame, sys, os, json, numpy as np
 from random import randint, randrange
 
 class Individuo:
@@ -62,7 +62,7 @@ class RedeNeural:
 class Dino(pygame.sprite.Sprite):
     """Representa o personagem dinossauro no jogo, com diferentes estados de animação (correndo, agachando, pulando) 
     e lógica de movimentação (pulo, colisão com o chão e gravidade)."""
-    def __init__(self, y_inicial:int):
+    def __init__(self, y_inicial:int, cor_dino:tuple):
         """Inicializa o Dino com a posição inicial no eixo y, define variáveis relacionadas à movimentação e
         cria a lista de sprites com a cor aleatória."""
         pygame.sprite.Sprite.__init__(self)
@@ -74,25 +74,23 @@ class Dino(pygame.sprite.Sprite):
         self.index_sprite = 0
         self.sheet = None
         self.sprite_list = []
-
-        self.set_cor()
+        self.set_cor(cor_dino)
 
         self.image = self.sprite_list[1]
         self.rect = pygame.Rect(50, 0, 35, 43)
         self.rect.bottom = self.y_inicial
 
-    def set_cor(self):
+    def set_cor(self, cor:tuple):
         """Define uma cor aleatória para o Dino e adiciona as sprites a lista de sprites com base na
         imagem de fundo (sheet_dino), aplicando a cor escolhida."""
-        cor_aleatoria = (randint(0,200), randint(0,200), randint(0,200))
         self.sheet = sheet_dino.copy()
-        self.sheet.fill(cor_aleatoria, special_flags=pygame.BLEND_RGB_MULT)
+        self.sheet.fill(cor, special_flags=pygame.BLEND_RGB_MULT)
 
         self.sprite_list = []
         for i in range(6):
             img = self.sheet.subsurface((i * 64,0), (64,64))
             self.sprite_list.append(img)
-        
+
     def run(self):
         """Define a animação de corrida do Dino, alternando entre os sprites de corrida com base
         em um índice de sprite ajustado ao longo do tempo."""
@@ -301,6 +299,9 @@ def carregar_individuo():
     try:
         with open("save.json", "r") as f:
             dados = json.load(f)
+            for indice in range(len(dados["pesos"])):
+                dados["pesos"][indice] = np.array(dados["pesos"][indice])
+                dados["bias"][indice] = np.array(dados["bias"][indice])
             return dados
     except FileNotFoundError:
         return None
@@ -316,6 +317,17 @@ def resource_path(*paths) -> str:
 
     return os.path.join(base_path, *paths)
 
+def alterna_cor(dino:Dino):
+    """Altera a cor do Dino para uma nova cor aleatória."""
+    for indice in range(3):
+        if dino_cor[indice] <= 5:
+            dino_inc[indice] = randint(0,2)
+        if dino_cor[indice] >= 250:
+            dino_inc[indice] = -randint(0,2)
+
+        dino_cor[indice] += dino_inc[indice]
+            
+    dino.set_cor(tuple(dino_cor))
 
 if __name__ == "__main__":
 
@@ -353,7 +365,7 @@ if __name__ == "__main__":
     PRETO = (0,0,0)
     BRANCO = (255,255,255)
     VERMELHO = (255,0,0)
-    CINZA = (220,220,220)
+    CINZA = (200,200,200)
     AZUL = (0,0,255)
 
     cenario_velocidade = 5
@@ -382,23 +394,45 @@ if __name__ == "__main__":
 
     """Configura o dinossauro da rede neural"""
 
-    dino_ia = Dino(ALTURA_TELA-15)
+    dino_ia = Dino(ALTURA_TELA-15, CINZA)
     
     dados_individuo = carregar_individuo()
+    
     if dados_individuo:
-        pesos = dados_individuo["pesos"]
-        bias = dados_individuo["bias"]
-        dino_ia.individuo = Individuo(pesos, bias)
+        dino_ia.individuo = Individuo(dados_individuo["pesos"], dados_individuo["bias"])
     else:
         dino_ia.individuo = Individuo(
-            pesos=[[[0.5074315671662251, 0.2633615061417331, 0.5397681365465103, 0.06415556404818265, -0.6534473940271255, -0.26599780732981676], [-0.987905336909293, -0.8763441874234379, 0.0921063500767919, -0.6545921364974719, -0.704535104341474, 0.029202318914437007], [0.9902098157359024, -0.7033346417336367, -0.7064584729202517, -0.7514695676836608, -1.443915005180561, 0.576507756963927], [2.736543265421725, -0.729936757014663, 0.6794409625015634, -0.4125664230637276, 0.8288531942121911, -0.5823492406763886], [-0.3110466142433259, 0.0834032169761393, -0.5767010604645484, 1.6043497057075633, 0.06772790995150739, -0.895447130358725], [-2.159273431340217, -1.1168767684310668, 0.43293582859638907, 0.2983402145000841, -0.798556346900806, 0.7987576215310531], [0.6487397163307907, -1.3332697741434116, 0.7379537924573264, -0.4581321594603124, 1.2876080826821683, -0.033792274321550166]], [[-1.3726606816236013, 0.7269974725689791], [-1.9432376306625583, -0.04488050749893501], [-2.376056207797437, 0.6840570529769193], [1.4492983128457986, -0.28032689461371285], [-0.8233738901342478, -1.492281147813817], [1.165873101025012, -0.978512247365692]]],
-            bias=[[0.9216243707333223, -0.3160915201540932, -0.1397999527776848, 0.8378775913877831, 0.45335539691564253, -1.1026840966209435], [0.5647587321068178, -1.0402358174384603]]
+            pesos=[
+                np.array([
+                    [0.8914157803126906, -0.8372861885659463, 0.002370710344286102, -0.5247555778637559, 0.6197739561417591, 0.8103433063209424],
+                    [-0.09302993529974754, -1.7165233765706402, -0.16321148230592541, 0.775417728220612, -0.773347697187472, 0.4616250420005482],
+                    [0.3046987000636443, 1.0131424557147488, 1.5292279854939053, -1.5333913674211817, -1.0170446051027942, -0.8584164788833523],
+                    [1.7347305883511983, -1.3498604702446155, -0.062019864181227596, 0.20697375631097395, -0.05680626295857924, 0.3645002779661349],
+                    [-1.014067648018407, -0.8502935179982883, 0.9867444624350931, 0.30099178229584483, 0.2639810988085307, -1.1656285034284857],
+                    [-0.6467407579732929, 1.0590785492332255, -0.4677278688444082, 1.9167003092198094, -1.1363605330496769, -0.10579264946496478]
+                ]),
+                np.array([
+                    [-1.824211509535813, 0.5883695548403097],
+                    [0.34480149300350926, 0.2138354807627937],
+                    [1.0770411117876877, 1.5215396586089982],
+                    [0.21830919094370566, -1.5032079109864864],
+                    [-2.5292353181239675, 0.8195705712551891],
+                    [-0.3377294301142835, -0.8926588687678352]
+                ])
+            ],
+            bias=[
+                np.array([-0.815920734964958, 1.8829256074977516, 0.041424555823322634, 0.8175603399086147, 0.9200972465661936, 0.9161014905060323]),
+                np.array([0.3154739804682615, 0.7084499550076195])
+            ]
         )
         
     """Configura o dinossauro do jogador"""
 
-    dino_player = Dino(ALTURA_TELA-15)
+    dino_player = Dino(ALTURA_TELA-15, AZUL)
     dino_player.rect.x = 150
+
+    dino_cor = [randint(0,200),randint(0,200),randint(0,200)]
+    dino_inc = [randint(0,2), -randint(0,2), randint(0,2)]
 
     """Crias todas as sprites do jogo"""
     group_sprites = pygame.sprite.Group()
@@ -451,7 +485,7 @@ if __name__ == "__main__":
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.KEYDOWN:
+            elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_BACKSPACE:
                     renicia = True
                 elif event.key in [pygame.K_UP, pygame.K_SPACE]:
@@ -473,9 +507,9 @@ if __name__ == "__main__":
                 entradas = [
                     obstaculo_frente.rect.x - dino_ia.rect.right,     # obstaculo_distacia
                     obstaculo_frente.rect.right - dino_ia.rect.right, # obstaculo_largura
-                    ALTURA_TELA - obstaculo_frente.rect.y,         # obstaculo_altura
-                    ALTURA_TELA - obstaculo_frente.rect.bottom,    # obstaculo_comprimento
-                    cenario_velocidade,                            # cenario_velocidade
+                    ALTURA_TELA - obstaculo_frente.rect.y,            # obstaculo_altura
+                    ALTURA_TELA - obstaculo_frente.rect.bottom,       # obstaculo_comprimento
+                    cenario_velocidade,                               # cenario_velocidade
                     ALTURA_TELA - dino_ia.rect.y,                     # dino_altura
                 ]
 
@@ -530,13 +564,16 @@ if __name__ == "__main__":
                 if colisoes:
                     mata_dino(dino_player)
 
+            if not dino_player.morreu:
+                alterna_cor(dino_player)
+
             pontos += 1
 
             """Taxa de aumento de velocidade do cenario"""
-            if pontos % 500 == 0:
+            if pontos % 250 == 0:
                 if som_ativo:
                     som_ponto.play()
-                if cenario_velocidade < 20:
+                if cenario_velocidade < 15:
                     cenario_velocidade += 1
 
             if lista_obstaculos_tela[0].rect.right <= 0:
@@ -545,8 +582,12 @@ if __name__ == "__main__":
             """Atualiza e as sprites na tela"""
             group_sprites.update()
             group_obstaculos.update()
-            
-        if renicia: # Renicia
+        
+        if dino_ia.morreu and dino_player.morreu:
+            renicia = True
+
+        """Renicia o jogo"""
+        if renicia:
             
             """config do player e da IA"""
             dino_player.morreu = False
@@ -594,11 +635,14 @@ if __name__ == "__main__":
                 nuvem.rect.right = 0
 
         """Desenha as mensagens na tela"""
-        texto_fps = exibe_mensagem(f"Fps: {relogio.get_fps():.2f}", 20, PRETO)
-        tela.blit(texto_fps, (20,20))
+        texto_fps = exibe_mensagem(f"Fps: {relogio.get_fps():.2f}", 30, PRETO)
+        tela.blit(texto_fps, (50,20))
 
-        texto_pontos = exibe_mensagem(f"pontos: {pontos}", 50, AZUL)
-        tela.blit(texto_pontos, (600,50))
+        texto_pontos = exibe_mensagem(f"velocidade: {cenario_velocidade}", 30, PRETO)
+        tela.blit(texto_pontos, (350,20))
+
+        texto_pontos = exibe_mensagem(f"pontos: {pontos}", 30, AZUL)
+        tela.blit(texto_pontos, (750,20))
 
         """Desenha as sprites na tela"""
         group_sprites.draw(tela)
