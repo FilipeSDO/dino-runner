@@ -6,9 +6,10 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        ('assets/images/*', 'images'),
         ('assets/fonts/*', 'fonts'),
+        ('assets/images/*', 'images'),
         ('assets/sounds/*', 'sounds'),
+        ('assets/icon.png', '.'),
     ],
     hiddenimports=[],
     hookspath=[],
@@ -37,7 +38,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='assets/icon.ico',
+    icon='assets/icon.png',
 )
 
 coll = COLLECT(
