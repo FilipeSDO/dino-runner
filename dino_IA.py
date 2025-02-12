@@ -141,7 +141,8 @@ class RedeNeural:
         pygame.draw.circle(surface, AZUL, posicao_atual, 3)
         pygame.draw.line(surface, AZUL, posicao_antiga, posicao_atual)
 
-        posicao_x = origem_x + 670
+        posicao_x = origem_x + 700
+        origem_y = 40
         posicoes_xy = []
         for indice_camada, camada in enumerate(self.lista_neuronios):
             if indice_camada == 0:
@@ -400,11 +401,9 @@ def set_novo_obstaculo():
     set_posicao_x(obstaculo_espera)
     lista_obstaculos_tela.append(obstaculo_espera)
 
-def mata_dino(indice_dino:int) -> Dino:
+def mata_dino(dino:Dino):
     """Marca o dinossauro como morto, altera sua imagem e executa o som de morte, 
     ajustando a altura e posição do dinossauro caso ele tenha um tamanho ou posição específica."""
-    dino = lista_dinos_vivos.pop(indice_dino)
-
     if som_ativo:
         som_morte.play()
 
@@ -414,8 +413,6 @@ def mata_dino(indice_dino:int) -> Dino:
     if dino.rect.height == 26 or dino.rect.bottom > dino.y_inicial:
         dino.rect.height = 43
         dino.rect.bottom = dino.y_inicial
-
-    return dino
 
 def exibe_mensagem(msg, tamanho:int, cor:tuple):
     """Exibe uma mensagem formatada na tela com a fonte e cor especificadas"""
@@ -428,6 +425,9 @@ def carregar_individuo():
     try:
         with open("save.json", "r") as f:
             dados = json.load(f)
+            for indice in range(len(dados["pesos"])):
+                dados["pesos"][indice] = np.array(dados["pesos"][indice])
+                dados["bias"][indice] = np.array(dados["bias"][indice])
             return dados
     except FileNotFoundError:
         return None
@@ -498,12 +498,18 @@ if __name__ == "__main__":
     CINZA = (220,220,220)
     AZUL = (0,0,255)
 
-    cenario_velocidade = 5
 
     tela = pygame.display.set_mode((LARGURA_TELA, ALTURA_TELA))
     pygame.display.set_caption("Dino I.A.")
 
+    """Criando um evento personalizado e o dispara a cada 1000 milissegundos (1 segundo)"""
+    TIMER_EVENT = pygame.USEREVENT + 1
+    pygame.time.set_timer(TIMER_EVENT, 1000)
+    segundos = 0
+    minutos = 0
+
     relogio = pygame.time.Clock()
+    cenario_velocidade = 5
 
     """Carrega as imagens, sons e a fonte do jogo"""
     diretorio_fonte = resource_path("fonts", "Minecraft.ttf")
@@ -522,11 +528,21 @@ if __name__ == "__main__":
 
     """Crias todas as sprites do jogo"""
     group_sprites = pygame.sprite.Group()
-    lista_dinos = []
 
-    for _ in range(500):
+    melhor_dino = Dino(ALTURA_TELA-15)
+    dados_individuo = carregar_individuo()
+    
+    if dados_individuo:
+        melhor_dino.individuo = Individuo(dados_individuo["pesos"], dados_individuo["bias"])
+    else:
+        melhor_dino.individuo = rede_neural.individuo_random()
+
+    lista_dinos = [melhor_dino]
+    group_sprites.add(melhor_dino)
+
+    for _ in range(499):
         dino = Dino(ALTURA_TELA-15)
-        dino.individuo = rede_neural.individuo_random()
+        dino.individuo = rede_neural.mutacao(melhor_dino.individuo, 0.5)
         lista_dinos.append(dino)
         group_sprites.add(dino)
 
@@ -559,6 +575,10 @@ if __name__ == "__main__":
     group_obstaculos.add(cacto)
     lista_obstaculos_tela = [cacto]
 
+    cacto.rect.size = (73,47)
+    cacto.rect.bottom = cacto.y_inicial
+    cacto.image = cacto.sprite_list[4]
+
     for _ in range(3):
         cacto = Cacto(ALTURA_TELA-10)
         set_posicao_x(cacto)
@@ -577,8 +597,18 @@ if __name__ == "__main__":
         tela.fill(BRANCO)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                salvar_individuo(lista_dinos_vivos[0].individuo, geracao)
                 pygame.quit()
                 sys.exit()
+            elif event.type == TIMER_EVENT:
+                segundos += 1
+                if segundos == 60:
+                    segundos = 0
+                    minutos += 1
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_BACKSPACE:
+                    vivos = 0
+                    melhor_dino = lista_dinos_vivos[0]
 
         indice = 0
 
@@ -638,7 +668,8 @@ if __name__ == "__main__":
             colidiu = pygame.sprite.spritecollide(dino, group_obstaculos, False)
             
             if colidiu:
-                ultimo_dino = mata_dino(indice)
+                mata_dino(dino)
+                melhor_dino = lista_dinos_vivos.pop(indice)
                 vivos -= 1
             else:
                 indice += 1
@@ -650,30 +681,32 @@ if __name__ == "__main__":
             limite_grafico_y = escala * 300
 
         """Taxa de aumento de velocidade do cenario"""
-        if rede_neural.lista_pontos[-1] % 100 == 0:
+        if rede_neural.lista_pontos[-1] % 250 == 0:
             if som_ativo:
                 som_ponto.play()
-            if cenario_velocidade < 20:
+            if cenario_velocidade < 15:
                 cenario_velocidade += 1
 
         if lista_obstaculos_tela[0].rect.right <= 0:
             set_novo_obstaculo()
-        
-        if not lista_dinos_vivos: # Renicia
+
+        """Renicia o jogo"""
+        if vivos == 0:
             
             """config da rede neural"""
             for dino in lista_dinos:
-                if dino.individuo.fitness > ultimo_dino.individuo.fitness:
-                    ultimo_dino = dino
+                if dino.individuo.fitness > melhor_dino.individuo.fitness:
+                    melhor_dino = dino
 
-            salvar_individuo(ultimo_dino.individuo, geracao)
+            salvar_individuo(melhor_dino.individuo, geracao)
+            melhor_dino.individuo.fitness = 0
             
             for dino in lista_dinos:
                 dino.set_cor()
                 dino.morreu = False
                 dino.rect.x = 50
-                if dino != ultimo_dino:
-                    dino.individuo = rede_neural.mutacao(ultimo_dino.individuo, 0.2)
+                if dino != melhor_dino:
+                    dino.individuo = rede_neural.mutacao(melhor_dino.individuo, 0.2)
 
             rede_neural.lista_pontos.append(0)
 
@@ -711,18 +744,26 @@ if __name__ == "__main__":
             for nuvem in lista_nuvem:
                 nuvem.rect.right = 0
 
+            cacto = lista_obstaculos_tela[0]
+            cacto.rect.size = (73,47)
+            cacto.rect.bottom = cacto.y_inicial
+            cacto.image = cacto.sprite_list[4]
+
         """Desenha as mensagens na tela"""
-        texto_geracao = exibe_mensagem(f"geracao: {geracao}", 30, PRETO)
-        tela.blit(texto_geracao, (20,350))
-        
-        texto_vivos = exibe_mensagem(f"vivos: {vivos}", 30, PRETO)
-        tela.blit(texto_vivos, (250,350))
-
-        texto_fps = exibe_mensagem(f"Fps: {relogio.get_fps():.2f}", 30, PRETO)
-        tela.blit(texto_fps, (500,350))
-
         texto_pontos = exibe_mensagem(f"pontos: {rede_neural.lista_pontos[-1]}", 30, AZUL)
-        tela.blit(texto_pontos, (750,350))
+        tela.blit(texto_pontos, (130,320))
+
+        texto_tempo = exibe_mensagem(f'tempo: {minutos}:{segundos}', 20, PRETO)
+        tela.blit(texto_tempo, (450,350))
+
+        texto_geracao = exibe_mensagem(f"geracao: {geracao}", 20, PRETO)
+        tela.blit(texto_geracao, (650,350))
+        
+        texto_vivos = exibe_mensagem(f"vivos: {vivos}", 20, PRETO)
+        tela.blit(texto_vivos, (850,350))
+
+        texto_fps = exibe_mensagem(f"Fps: {relogio.get_fps():.2f}", 15, PRETO)
+        tela.blit(texto_fps, (920,20))
 
         """Atualiza e as sprites na tela"""
         group_sprites.update()
