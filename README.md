@@ -1,12 +1,22 @@
-# 🦖 Dino IA - Jogo com Rede Neural  
+# 🦖 Dino I.A. - Jogo com Rede Neural  
 
-Dino IA é um jogo baseado no clássico Dino Runner do Chrome, mas com um diferencial: uma Inteligência Artificial (IA) treinada para jogar sozinha!  
+Dino I.A. é um jogo baseado no clássico Dino Runner do Chrome, mas com um diferencial: uma Inteligência Artificial (IA) treinada para jogar sozinha!
 
 ![Preview do Jogo](assets/preview.gif)
 
-## 🤖 Sobre a IA  
+## 🎮 Sobre o Projeto
 
-A IA foi treinada usando uma rede neural para reconhecer padrões e aprender a jogar com base na pontuação e na posição dos obstáculos.
+O jogo utiliza um algoritmo evolutivo para treinar a IA, permitindo que ela melhore suas decisões a cada tentativa. Com isso, a I.A. se adapta aos obstáculos e aprende a alcançar distâncias cada vez maiores.
+
+Além do modo treinamento, você também pode testar suas habilidades no modo Jogador vs. I.A., competindo diretamente contra o dinossauro inteligente.
+
+Este projeto foi desenvolvido do zero(sem engine) biblioteca gráfica Pygame que é baseado na Simple DirectMedia Layer (SDL) alem de Numpy para lidar com arrays e técnicas de aprendizado de máquina, proporcionando uma experiência divertida e educativa para quem deseja entender melhor como uma I.A. aprende!
+
+
+
+## Por quê?
+
+Fiz esse projeto para entender como redes neurais funcionam
 
 ## 🚀 Funcionalidades  
 - 🎮 Modo Jogador vs. IA (`player_vs_IA.py`)  
@@ -17,20 +27,23 @@ A IA foi treinada usando uma rede neural para reconhecer padrões e aprender a j
 ## 📂 Estrutura do Repositório  
 
 ```
-- assets/            # Recursos visuais e sonoros
-  ├── fonts/         # Fontes usadas no jogo
-  ├── images/        # Imagens do jogo
-  ├── sounds/        # Efeitos sonoros e música
-  ├── icon.png       # Ícone do jogo
-  └── preview.gif    # GIF de demonstração do jogo
+- assets/               # Recursos visuais e sonoros
+  ├── fonts/            # Fontes usadas no jogo
+  ├── images/           # Imagens do jogo
+  ├── sounds/           # Efeitos sonoros e música
+  ├── icon.png          # Ícone do jogo
+  └── preview.gif       # GIF de demonstração do jogo
 
-- executaveis.rar    # Arquivos pré-compilados do jogo
-- dino_IA.py         # Código da IA jogando sozinha
-- dino_IA.spec       # Configuração do PyInstaller para gerar executável
-- player_vs_IA.py    # Código para modo jogador vs IA
-- player_vs_IA.spec  # Configuração do PyInstaller para modo jogador vs IA
-- requirements.txt   # Dependências do projeto
-- README.md          # Documentação do projeto
+- executaveis/          # Executaveis
+  ├── dino_IA.rar       # Executavel do dino_IA
+  ├── player_vs_IA.rar  # Executavel do player_vs_IA
+
+- dino_IA.py            # Código da IA jogando sozinha
+- dino_IA.spec          # Configuração do PyInstaller para gerar executável
+- player_vs_IA.py       # Código para modo jogador vs IA
+- player_vs_IA.spec     # Configuração do PyInstaller para modo jogador vs IA
+- requirements.txt      # Dependências do projeto
+- README.md             # Documentação do projeto
 ```
 
 ## 🛠️ Como Rodar  
