@@ -55,7 +55,7 @@ Fiz esse projeto para entender como redes neurais funcionam
 - README.md             # Documentação do projeto
 ```
 
-## 🛠️ Como Rodar  
+## 🛠️ Rodar no terminal
 
 ### 🔧 Pré-requisitos  
 Antes de rodar o jogo, instale as dependências:  
@@ -77,6 +77,11 @@ Para ver a IA treinando:
 ```bash
 python dino_IA.py
 ```
+
+## 🕹️ Rodar com o executavel
+
+Extrair os arquivos detro da pasta executaveis e excutar o game
+
 
 ## 📦 Como Gerar o Executável  
 
