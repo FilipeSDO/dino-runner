@@ -10,9 +10,18 @@ O jogo utiliza um algoritmo evolutivo para treinar a IA, permitindo que ela melh
 
 Além do modo treinamento, você também pode testar suas habilidades no modo Jogador vs. I.A., competindo diretamente contra o dinossauro inteligente.
 
-Este projeto foi desenvolvido do zero(sem engine) biblioteca gráfica Pygame que é baseado na Simple DirectMedia Layer (SDL) alem de Numpy para lidar com arrays e técnicas de aprendizado de máquina, proporcionando uma experiência divertida e educativa para quem deseja entender melhor como uma I.A. aprende!
+Este projeto foi desenvolvido do zero(sem engine) com a biblioteca gráfica Pygame que é baseado na Simple DirectMedia Layer (SDL) alem de utilizar Numpy para lidar com arrays e técnicas de aprendizado de máquina, proporcionando uma experiência divertida e educativa para quem deseja entender melhor como uma I.A. aprende!
 
+  A Rede Neural utilizada foi uma Multi-Layer Perceptron (MLP) com 3 camadas
 
+  - Camada de Entrada com 6 sensores
+  - Camada Escondida com 6 neurônios
+  - Camada de Saída com 2 neurônios Pular ou Abaixar
+  - Totalizando 14 neuronios
+  - A função de ativação utilizada foi a Rectified Linear Unit (ReLU).
+  - O método de aprendizagem foi o algoritmo evolutivo.
+  - O tamanho da população foi de 500 indivíduos.
+  - O tempo de aprendizagem variou entre 15 a 60.
 
 ## Por quê?
 
