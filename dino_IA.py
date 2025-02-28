@@ -21,7 +21,11 @@ class RedeNeural:
         self.camadas_escondida = camadas_escondida
         self.camada_saida = camada_saida
         self.descricao = descricao
+        self.geracao = 0
         self.lista_pontos = [0]
+        self.escala_grafico = 0
+        self.limite_grafico_y = 0
+
         self.lista_neuronios = [self.camada_entrada]
 
         for camada in self.camadas_escondida:
@@ -60,7 +64,7 @@ class RedeNeural:
 
         return Individuo(pesos, bias)
 
-    def mutacao(self, individuo:Individuo, taxa_mutacao:float) -> Individuo:
+    def mutacao(self, individuo:Individuo, taxa_mutacao:float, escala_mutacao:float) -> Individuo:
         """Aplica mutação nos pesos e biases de um indivíduo com uma determinada taxa de mutação, 
         alterando aleatoriamente valores em seus parâmetros."""
         pai = copy.deepcopy(individuo)
@@ -71,11 +75,11 @@ class RedeNeural:
             for neuronio in range(len(pesos[camada])):
                 for peso in range(len(pesos[camada][neuronio])):
                     if np.random.rand() < taxa_mutacao:
-                        pesos[camada][neuronio][peso] += np.random.randn() * 0.2
+                        pesos[camada][neuronio][peso] += np.random.randn() * escala_mutacao
 
             for neuronio in range(len(bias[camada])):
                 if np.random.rand() < taxa_mutacao:
-                    bias[camada][neuronio] += np.random.randn() * 0.2
+                    bias[camada][neuronio] += np.random.randn() * escala_mutacao
 
         return Individuo(pesos, bias)
 
@@ -99,7 +103,7 @@ class RedeNeural:
 
         return resultado  # Retorna a saída da rede (previsão do indivíduo)
 
-    def draw(self, surface:pygame.surface.Surface, entradas:list, saidas:list, posicao:tuple, escala_y:int):
+    def draw(self, surface:pygame.surface.Surface, entradas:list, saidas:list, posicao:tuple):
         """Desenha a estrutura da rede neural (camadas de neurônios, entradas, saídas) em uma superfície 
         do Pygame, incluindo conexões entre neurônios com base nos valores das entradas e saídas."""
         origem_x, origem_y = posicao
@@ -129,14 +133,14 @@ class RedeNeural:
 
         for indice in range(len_lista_pontos-1):
             ponto_x += divisao_grafico
-            ponto_y = origem_y + quadrado_y - int(self.lista_pontos[indice] / escala_y)
+            ponto_y = origem_y + quadrado_y - int(self.lista_pontos[indice] / self.escala_grafico)
             posicao_atual = (ponto_x,ponto_y)
             pygame.draw.line(surface, AZUL, posicao_antiga, posicao_atual)
             pygame.draw.circle(surface, AZUL, posicao_atual, 3)
             posicao_antiga = (ponto_x,ponto_y)
 
         ponto_x = origem_x + quadrado_x
-        ponto_y = origem_y + quadrado_y - int(self.lista_pontos[-1] / escala_y)
+        ponto_y = origem_y + quadrado_y - int(self.lista_pontos[-1] / self.escala_grafico)
         posicao_atual = (ponto_x,ponto_y)
         pygame.draw.circle(surface, AZUL, posicao_atual, 3)
         pygame.draw.line(surface, AZUL, posicao_antiga, posicao_atual)
@@ -144,10 +148,10 @@ class RedeNeural:
         posicao_x = origem_x + 700
 
         indice_dino = lista_dinos.index(lista_dinos_vivos[-1])
-        texto_descricao = exibe_mensagem(f'individuo: {indice_dino + 1}', 20, VERMELHO)
+        texto_descricao = exibe_mensagem(f"individuo: {indice_dino + 1}", 20, VERMELHO)
         surface.blit(texto_descricao, (ponto_x + 50, origem_y))
 
-        texto_descricao = exibe_mensagem('cor:', 20, PRETO)
+        texto_descricao = exibe_mensagem("cor:", 20, PRETO)
         surface.blit(texto_descricao, (ponto_x + 300, origem_y))
 
         pygame.draw.rect(surface, lista_dinos[indice_dino].cor_dino, (ponto_x + 350, origem_y, 17, 17))
@@ -200,7 +204,7 @@ class Dino(pygame.sprite.Sprite):
         """Inicializa o Dino com a posição inicial no eixo y, define variáveis relacionadas à movimentação e
         cria a lista de sprites com a cor aleatória."""
         pygame.sprite.Sprite.__init__(self)
-        self.individuo = None
+        self.individuo = Individuo([],[])
         self.morreu = False
         self.passando_obstaculo = False
         self.y_inicial = y_inicial
@@ -374,7 +378,7 @@ class Pterossauro(pygame.sprite.Sprite):
             self.index_sprite += 0.15
             self.image = self.sprite_list[int(self.index_sprite)]
         
-def nome_da_classe(objeto):
+def nome_da_classe(objeto) -> str:
     """Retorna o nome da classe do objeto passado como argumento."""
     return objeto.__class__.__name__
 
@@ -424,38 +428,33 @@ def mata_dino(dino:Dino):
         dino.rect.height = 43
         dino.rect.bottom = dino.y_inicial
 
-def exibe_mensagem(msg, tamanho:int, cor:tuple):
+def exibe_mensagem(msg, tamanho:int, cor:tuple) -> pygame.surface.Surface:
     """Exibe uma mensagem formatada na tela com a fonte e cor especificadas"""
     fonte = pygame.font.Font(diretorio_fonte, tamanho)
     texto_formatado = fonte.render(f"{msg}", True, cor)
     return texto_formatado
 
-def carregar_individuo():
-    """Carrega os dados do melhor indivíduo salvo no arquivo "save.json"."""
+def carrega_json() -> dict:
+    """Carrega os dados da rede neural salvo no arquivo "save.json"."""
     try:
-        with open("save.json", "r") as f:
-            dados = json.load(f)
-            for indice in range(len(dados["pesos"])):
-                dados["pesos"][indice] = np.array(dados["pesos"][indice])
-                dados["bias"][indice] = np.array(dados["bias"][indice])
+        with open("save.json", "r", encoding="utf-8") as arquivo:
+            dados = json.load(arquivo)
+            for indice in range(len(dados["individuo"]["pesos"])):
+                dados["individuo"]["pesos"][indice] = np.array(dados["individuo"]["pesos"][indice])
+                dados["individuo"]["bias"][indice] = np.array(dados["individuo"]["bias"][indice])
             return dados
-    except FileNotFoundError:
+    except (FileNotFoundError, json.JSONDecodeError):
         return None
 
-def salvar_individuo(individuo:Individuo, geracao:int):
-    """Salva os dados do melhor indivíduo se ele tiver um fitness superior ao atualmente armazenado."""
-    melhor_individuo = carregar_individuo()
+def salva_json(rede:RedeNeural, individuo:Individuo):
+    """Salva o informações da rede neural."""
+    dados = {
+        "rede": {"geracao": rede.geracao, "escala": rede.escala_grafico, "pontos": rede.lista_pontos},
+        "individuo": {"pesos": individuo.pesos, "bias": individuo.bias, "fitness": individuo.fitness}
+    }
 
-    if melhor_individuo is None or individuo.fitness > melhor_individuo["fitness"]:
-        dados = {
-            "geracao": geracao,
-            "pesos": individuo.pesos,
-            "bias": individuo.bias,
-            "fitness": individuo.fitness
-        }
-
-        with open("save.json", "w") as f:
-            json.dump(dados, f, default=lambda x: x.tolist() if isinstance(x, np.ndarray) else x)
+    with open("save.json", "w", encoding="utf-8") as arquivo:
+        json.dump(dados, arquivo, ensure_ascii=False, indent=4, default=lambda x: x.tolist() if isinstance(x, np.ndarray) else x)
 
 def resource_path(*paths) -> str:
     """Retorna o caminho correto, dependendo de estar rodando no executável ou no código fonte."""
@@ -486,9 +485,27 @@ if __name__ == "__main__":
         ]
     )
 
-    geracao = 0
-    escala = 10
-    limite_grafico_y = escala * 300
+    dados = carrega_json()
+
+    if dados:
+        rede_neural.geracao = dados["rede"]["geracao"]
+        rede_neural.lista_pontos = dados["rede"]["pontos"]
+        rede_neural.escala_grafico = dados["rede"]["escala"]
+
+        primeiro_individuo = Individuo(dados["individuo"]["pesos"], dados["individuo"]["bias"])
+
+        if dados["individuo"]["fitness"] >= 100:
+            taxa_mutacao = 0.1
+        else:
+            taxa_mutacao = round(1 - (rede_neural.geracao / 100), 1)
+    else:
+        rede_neural.escala_grafico = 5
+
+        primeiro_individuo = rede_neural.individuo_random()
+        taxa_mutacao = 2
+
+    escala_mutacao = taxa_mutacao
+    rede_neural.limite_grafico_y = rede_neural.escala_grafico * 300
 
     """Configura o pygame"""
     pygame.init()
@@ -538,20 +555,20 @@ if __name__ == "__main__":
     """Crias todas as sprites do jogo"""
     group_sprites = pygame.sprite.Group()
 
-    melhor_dino = Dino(ALTURA_TELA-15)
-    dados_individuo = carregar_individuo()
-    
-    if dados_individuo:
-        melhor_dino.individuo = Individuo(dados_individuo["pesos"], dados_individuo["bias"])
-    else:
-        melhor_dino.individuo = rede_neural.individuo_random()
+    dino = Dino(ALTURA_TELA-15)
+    dino.individuo = primeiro_individuo
 
-    lista_dinos = [melhor_dino]
-    group_sprites.add(melhor_dino)
+    lista_dinos = [dino]
+    group_sprites.add(dino)
 
     for _ in range(499):
         dino = Dino(ALTURA_TELA-15)
-        dino.individuo = rede_neural.individuo_random()
+        
+        if dados:
+            dino.individuo = rede_neural.individuo_random()
+        else:
+            dino.individuo = rede_neural.mutacao(primeiro_individuo, taxa_mutacao, escala_mutacao)
+
         lista_dinos.append(dino)
         group_sprites.add(dino)
 
@@ -584,10 +601,6 @@ if __name__ == "__main__":
     group_obstaculos.add(cacto)
     lista_obstaculos_tela = [cacto]
 
-    cacto.rect.size = (73,47)
-    cacto.rect.bottom = cacto.y_inicial
-    cacto.image = cacto.sprite_list[4]
-
     for _ in range(3):
         cacto = Cacto(ALTURA_TELA-10)
         set_posicao_x(cacto)
@@ -606,7 +619,9 @@ if __name__ == "__main__":
         tela.fill(BRANCO)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                salvar_individuo(lista_dinos_vivos[0].individuo, geracao)
+                """Salva json quando fechar o jogo"""
+                rede_neural.lista_pontos.append(0)
+                salva_json(rede_neural, lista_dinos_vivos[0].individuo)
                 pygame.quit()
                 sys.exit()
             elif event.type == TIMER_EVENT:
@@ -614,10 +629,6 @@ if __name__ == "__main__":
                 if segundos == 60:
                     segundos = 0
                     minutos += 1
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_BACKSPACE:
-                    vivos = 0
-                    melhor_dino = lista_dinos_vivos[0]
 
         indice = 0
 
@@ -685,9 +696,9 @@ if __name__ == "__main__":
 
         rede_neural.lista_pontos[-1] += 1
 
-        if rede_neural.lista_pontos[-1] >= limite_grafico_y:
-            escala += 10
-            limite_grafico_y = escala * 300
+        if rede_neural.lista_pontos[-1] >= rede_neural.limite_grafico_y:
+            rede_neural.escala_grafico = round(rede_neural.escala_grafico+0.01, 2)
+            rede_neural.limite_grafico_y += 3
 
         """Taxa de aumento de velocidade do cenario"""
         if rede_neural.lista_pontos[-1] % 250 == 0:
@@ -707,7 +718,13 @@ if __name__ == "__main__":
                 if dino.individuo.fitness > melhor_dino.individuo.fitness:
                     melhor_dino = dino
 
-            salvar_individuo(melhor_dino.individuo, geracao)
+            salva_json(rede_neural, melhor_dino.individuo)
+
+            if melhor_dino.individuo.fitness >= 90:
+                taxa_mutacao = 0.1
+            else:
+                taxa_mutacao = round(1 - (rede_neural.geracao / 100), 1)
+
             melhor_dino.individuo.fitness = 0
             
             for dino in lista_dinos:
@@ -715,11 +732,11 @@ if __name__ == "__main__":
                 dino.morreu = False
                 dino.rect.x = 50
                 if dino != melhor_dino:
-                    dino.individuo = rede_neural.mutacao(melhor_dino.individuo, 0.2)
+                    dino.individuo = rede_neural.mutacao(melhor_dino.individuo, taxa_mutacao, escala_mutacao)
 
             rede_neural.lista_pontos.append(0)
 
-            geracao += 1
+            rede_neural.geracao += 1
 
             lista_dinos_vivos = lista_dinos.copy()
             vivos = len_lista_dinos
@@ -762,10 +779,10 @@ if __name__ == "__main__":
         texto_pontos = exibe_mensagem(f"pontos: {rede_neural.lista_pontos[-1]}", 30, AZUL)
         tela.blit(texto_pontos, (130,320))
 
-        texto_tempo = exibe_mensagem(f'tempo: {minutos}:{segundos}', 20, PRETO)
+        texto_tempo = exibe_mensagem(f"tempo: {minutos}:{segundos}", 20, PRETO)
         tela.blit(texto_tempo, (450,350))
 
-        texto_geracao = exibe_mensagem(f"geracao: {geracao}", 20, PRETO)
+        texto_geracao = exibe_mensagem(f"geracao: {rede_neural.geracao}", 20, PRETO)
         tela.blit(texto_geracao, (650,350))
         
         texto_vivos = exibe_mensagem(f"vivos: {vivos}", 20, PRETO)
@@ -781,7 +798,7 @@ if __name__ == "__main__":
         """Desenha as sprites na tela"""
         group_sprites.draw(tela)
         group_obstaculos.draw(tela)
-        rede_neural.draw(tela, entradas, saida, (10,10), escala)
+        rede_neural.draw(tela, entradas, saida, (10,10))
 
         """Atualiza a tela e o relógio do jogo"""
         pygame.display.flip()
