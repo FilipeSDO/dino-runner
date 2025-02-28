@@ -503,8 +503,8 @@ if __name__ == "__main__":
 
         primeiro_individuo = rede_neural.individuo_random()
         taxa_mutacao = 2
-
     escala_mutacao = taxa_mutacao
+
     rede_neural.limite_grafico_y = rede_neural.escala_grafico * 300
 
     """Configura o pygame"""
@@ -724,6 +724,7 @@ if __name__ == "__main__":
                 taxa_mutacao = 0.1
             else:
                 taxa_mutacao = round(1 - (rede_neural.geracao / 100), 1)
+            escala_mutacao = taxa_mutacao
 
             melhor_dino.individuo.fitness = 0
             
