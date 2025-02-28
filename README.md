@@ -21,7 +21,7 @@ Este projeto foi desenvolvido do zero(sem engine) com a biblioteca gráfica Pyga
   - A função de ativação utilizada foi a Rectified Linear Unit (ReLU).
   - O método de aprendizagem foi o algoritmo evolutivo.
   - O tamanho da população foi de 500 indivíduos.
-  - O tempo de aprendizagem variou entre 15 a 60.
+  - O tempo de aprendizagem variou entre 15 a 60 minutos.
 
 ## Por quê?
 
