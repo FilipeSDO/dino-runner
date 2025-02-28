@@ -80,19 +80,7 @@ python dino_IA.py
 
 ## 🕹️ Rodar com o executavel
 
-Extrair os arquivos detro da pasta executaveis e excutar o game
-
-
-## 📦 Como Gerar o Executável  
-
-Se quiser criar um executável, use:  
-
-```bash
-pyinstaller dino_IA.spec
-pyinstaller player_vs_IA.spec
-```
-
-Os arquivos `.spec` já estão configurados para facilitar o processo.  
+Extrair os arquivos .rar dentro da pasta executaveis e abrir o .exe.
 
 ## 🐝 Licença  
 
