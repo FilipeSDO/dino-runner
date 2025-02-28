@@ -237,7 +237,7 @@ class Pterossauro(pygame.sprite.Sprite):
             self.index_sprite += 0.15
             self.image = self.sprite_list[int(self.index_sprite)]
         
-def nome_da_classe(objeto):
+def nome_da_classe(objeto) -> str:
     """Retorna o nome da classe do objeto passado como argumento."""
     return objeto.__class__.__name__
 
@@ -287,22 +287,22 @@ def mata_dino(dino:Dino):
         dino.rect.height = 43
         dino.rect.bottom = dino.y_inicial
 
-def exibe_mensagem(msg, tamanho:int, cor:tuple):
+def exibe_mensagem(msg, tamanho:int, cor:tuple) -> pygame.surface.Surface:
     """Exibe uma mensagem formatada na tela com a fonte e cor especificadas"""
     fonte = pygame.font.Font(diretorio_fonte, tamanho)
     texto_formatado = fonte.render(f"{msg}", True, cor)
     return texto_formatado
 
-def carregar_individuo():
-    """Carrega os dados do melhor indivíduo salvo no arquivo "save.json"."""
+def carrega_json() -> dict:
+    """Carrega os dados da rede neural salvo no arquivo "save.json"."""
     try:
-        with open("save.json", "r") as f:
-            dados = json.load(f)
-            for indice in range(len(dados["pesos"])):
-                dados["pesos"][indice] = np.array(dados["pesos"][indice])
-                dados["bias"][indice] = np.array(dados["bias"][indice])
+        with open("save.json", "r", encoding="utf-8") as arquivo:
+            dados = json.load(arquivo)
+            for indice in range(len(dados["individuo"]["pesos"])):
+                dados["individuo"]["pesos"][indice] = np.array(dados["individuo"]["pesos"][indice])
+                dados["individuo"]["bias"][indice] = np.array(dados["individuo"]["bias"][indice])
             return dados
-    except FileNotFoundError:
+    except (FileNotFoundError, json.JSONDecodeError):
         return None
 
 def resource_path(*paths) -> str:
@@ -395,33 +395,104 @@ if __name__ == "__main__":
 
     dino_ia = Dino(ALTURA_TELA-15, CINZA)
     
-    dados_individuo = carregar_individuo()
+    dados = carrega_json()
     
-    if dados_individuo:
-        dino_ia.individuo = Individuo(dados_individuo["pesos"], dados_individuo["bias"])
+    if dados:
+        # tem erro aki
+        dino_ia.individuo = Individuo(dados["individuo"]["pesos"], dados["individuo"]["bias"])
     else:
         dino_ia.individuo = Individuo(
-            pesos=[
+            pesos = [
                 np.array([
-                    [0.8914157803126906, -0.8372861885659463, 0.002370710344286102, -0.5247555778637559, 0.6197739561417591, 0.8103433063209424],
-                    [-0.09302993529974754, -1.7165233765706402, -0.16321148230592541, 0.775417728220612, -0.773347697187472, 0.4616250420005482],
-                    [0.3046987000636443, 1.0131424557147488, 1.5292279854939053, -1.5333913674211817, -1.0170446051027942, -0.8584164788833523],
-                    [1.7347305883511983, -1.3498604702446155, -0.062019864181227596, 0.20697375631097395, -0.05680626295857924, 0.3645002779661349],
-                    [-1.014067648018407, -0.8502935179982883, 0.9867444624350931, 0.30099178229584483, 0.2639810988085307, -1.1656285034284857],
-                    [-0.6467407579732929, 1.0590785492332255, -0.4677278688444082, 1.9167003092198094, -1.1363605330496769, -0.10579264946496478]
+                    [
+                        7.196304852649284,
+                        -0.8739284556547353,
+                        -1.6975048223995874,
+                        -2.98242856498219,
+                        -2.7021646940160915,
+                        1.2781313844327562
+                    ],
+                    [
+                        4.742541953883711,
+                        -11.869064400397106,
+                        -7.790752627277446,
+                        -5.344319388794939,
+                        6.899810621104953,
+                        -1.1759477190178842
+                    ],
+                    [
+                        1.1224235946486858,
+                        -0.40061956985182307,
+                        -4.26790057337712,
+                        -12.442097770867159,
+                        0.9291181289042172,
+                        7.280128774885846
+                    ],
+                    [
+                        -12.66623272904336,
+                        1.7052058907530259,
+                        -1.0943501925153436,
+                        6.509224593982106,
+                        0.22764843152623804,
+                        -13.632405470325589
+                    ],
+                    [
+                        -5.162484955395137,
+                        -8.58024069920135,
+                        10.624031043448081,
+                        -12.83127759695358,
+                        -8.497248449476011,
+                        5.405933049404479
+                    ],
+                    [
+                        -12.842842267697566,
+                        -0.6266692725507854,
+                        2.267377048400517,
+                        11.992436112326144,
+                        6.7753798039642765,
+                        1.1226732468251372
+                    ]
                 ]),
                 np.array([
-                    [-1.824211509535813, 0.5883695548403097],
-                    [0.34480149300350926, 0.2138354807627937],
-                    [1.0770411117876877, 1.5215396586089982],
-                    [0.21830919094370566, -1.5032079109864864],
-                    [-2.5292353181239675, 0.8195705712551891],
-                    [-0.3377294301142835, -0.8926588687678352]
+                    [
+                        -13.228347415617975,
+                        -4.873485555819144
+                    ],
+                    [
+                        -2.4595792782331607,
+                        22.226765890496594
+                    ],
+                    [
+                        22.958096390683938,
+                        -0.7936401059029947
+                    ],
+                    [
+                        4.816804502679519,
+                        -1.9298940656587684
+                    ],
+                    [
+                        0.887515880142751,
+                        4.1905217063949145
+                    ],
+                    [
+                        6.855975892895226,
+                        -13.933524981600545
+                    ]
                 ])
             ],
-            bias=[
-                np.array([-0.815920734964958, 1.8829256074977516, 0.041424555823322634, 0.8175603399086147, 0.9200972465661936, 0.9161014905060323]),
-                np.array([0.3154739804682615, 0.7084499550076195])
+            bias = [
+                np.array([
+                    -2.04535008540506,
+                    5.471609138429885,
+                    0.7913569598490003,
+                    11.443279839241377,
+                    8.238800402782305,
+                    -6.3876627774243495
+                ]),
+                np.array([
+                    -0.1773017800941552,
+                    -10.152596785011804
+                ])
             ]
         )
         
